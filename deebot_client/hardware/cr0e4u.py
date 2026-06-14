@@ -1,1 +1,144 @@
-5xu9h3.py
+"""DEEBOT GOAT A3000 LiDAR Capabilities."""
+
+from __future__ import annotations
+
+from deebot_client.capabilities import (
+    CapabilityClean,
+    CapabilityCleanAction,
+    CapabilityCustomCommand,
+    CapabilityEvent,
+    CapabilityExecute,
+    CapabilityLifeSpan,
+    CapabilityMap,
+    CapabilitySet,
+    CapabilitySetEnable,
+    CapabilitySettings,
+    CapabilityStats,
+    Capabilities,
+    DeviceType,
+)
+from deebot_client.commands.json import (
+    GetBorderSwitch,
+    GetChildLock,
+    GetCrossMapBorderWarning,
+    GetCutDirection,
+    GetMoveUpWarning,
+    GetSafeProtect,
+    SetBorderSwitch,
+    SetChildLock,
+    SetCrossMapBorderWarning,
+    SetCutDirection,
+    SetMoveUpWarning,
+    SetSafeProtect,
+)
+from deebot_client.commands.json.advanced_mode import GetAdvancedMode, SetAdvancedMode
+from deebot_client.commands.json.battery import GetBattery
+from deebot_client.commands.json.charge import Charge
+from deebot_client.commands.json.charge_state import GetChargeState
+from deebot_client.commands.json.clean import CleanMower, CleanAreaV2, GetCleanInfo
+from deebot_client.commands.json.custom import CustomCommand
+from deebot_client.commands.json.error import GetError
+from deebot_client.commands.json.life_span import GetLifeSpan, ResetLifeSpan
+from deebot_client.commands.json.map import GetCachedMapInfo, GetMapTrace
+from deebot_client.commands.json.network import GetNetInfo
+from deebot_client.commands.json.play_sound import PlaySound
+from deebot_client.commands.json.pos import GetPos
+from deebot_client.commands.json.stats import GetStats, GetTotalStats
+from deebot_client.commands.json.volume import GetVolume, SetVolume
+from deebot_client.const import DataType
+from deebot_client.events import (
+    AdvancedModeEvent,
+    AvailabilityEvent,
+    BatteryEvent,
+    BorderSwitchEvent,
+    CachedMapInfoEvent,
+    ChildLockEvent,
+    CrossMapBorderWarningEvent,
+    CustomCommandEvent,
+    CutDirectionEvent,
+    ErrorEvent,
+    LifeSpan,
+    LifeSpanEvent,
+    MapChangedEvent,
+    MapTraceEvent,
+    MoveUpWarningEvent,
+    NetworkInfoEvent,
+    PositionsEvent,
+    ReportStatsEvent,
+    RoomsEvent,
+    SafeProtectEvent,
+    StateEvent,
+    StatsEvent,
+    TotalStatsEvent,
+    VolumeEvent,
+)
+from deebot_client.models import StaticDeviceInfo
+
+
+def get_device_info() -> StaticDeviceInfo:
+    """Get device info for this model."""
+    return StaticDeviceInfo(
+        DataType.JSON,
+        Capabilities(
+            device_type=DeviceType.MOWER,
+            availability=CapabilityEvent(
+                AvailabilityEvent, [GetBattery(is_available_check=True)]
+            ),
+            battery=CapabilityEvent(BatteryEvent, [GetBattery()]),
+            charge=CapabilityExecute(Charge),
+            clean=CapabilityClean(
+                action=CapabilityCleanAction(command=CleanMower, area=CleanAreaV2),
+            ),
+            custom=CapabilityCustomCommand(
+                event=CustomCommandEvent, get=[], set=CustomCommand
+            ),
+            error=CapabilityEvent(ErrorEvent, [GetError()]),
+            life_span=CapabilityLifeSpan(
+                types=(LifeSpan.BLADE,),
+                event=LifeSpanEvent,
+                get=[GetLifeSpan([LifeSpan.BLADE])],
+                reset=ResetLifeSpan,
+            ),
+            map=CapabilityMap(
+                cached_info=CapabilityEvent(CachedMapInfoEvent, [GetCachedMapInfo()]),
+                changed=CapabilityEvent(MapChangedEvent, []),
+                position=CapabilityEvent(PositionsEvent, [GetPos()]),
+                rooms=CapabilityEvent(RoomsEvent, [GetCachedMapInfo()]),
+                trace=CapabilityEvent(MapTraceEvent, [GetMapTrace()]),
+            ),
+            network=CapabilityEvent(NetworkInfoEvent, [GetNetInfo()]),
+            play_sound=CapabilityExecute(PlaySound),
+            settings=CapabilitySettings(
+                advanced_mode=CapabilitySetEnable(
+                    AdvancedModeEvent, [GetAdvancedMode()], SetAdvancedMode
+                ),
+                border_switch=CapabilitySetEnable(
+                    BorderSwitchEvent, [GetBorderSwitch()], SetBorderSwitch
+                ),
+                cut_direction=CapabilitySet(
+                    CutDirectionEvent, [GetCutDirection()], SetCutDirection
+                ),
+                child_lock=CapabilitySetEnable(
+                    ChildLockEvent, [GetChildLock()], SetChildLock
+                ),
+                moveup_warning=CapabilitySetEnable(
+                    MoveUpWarningEvent, [GetMoveUpWarning()], SetMoveUpWarning
+                ),
+                cross_map_border_warning=CapabilitySetEnable(
+                    CrossMapBorderWarningEvent,
+                    [GetCrossMapBorderWarning()],
+                    SetCrossMapBorderWarning,
+                ),
+                safe_protect=CapabilitySetEnable(
+                    SafeProtectEvent, [GetSafeProtect()], SetSafeProtect
+                ),
+                volume=CapabilitySet(VolumeEvent, [GetVolume()], SetVolume),
+            ),
+            state=CapabilityEvent(StateEvent, [GetChargeState(), GetCleanInfo()]),
+            stats=CapabilityStats(
+                clean=CapabilityEvent(StatsEvent, [GetStats()]),
+                report=CapabilityEvent(ReportStatsEvent, []),
+                total=CapabilityEvent(TotalStatsEvent, [GetTotalStats()]),
+            ),
+        ),
+    )
