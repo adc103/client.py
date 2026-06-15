@@ -60,6 +60,7 @@ from deebot_client.events import (
     LifeSpan,
     LifeSpanEvent,
     MapChangedEvent,
+    MapSetType,
     MapTraceEvent,
     MoveUpWarningEvent,
     NetworkInfoEvent,

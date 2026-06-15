@@ -108,6 +108,43 @@ class CleanAreaV2(CleanV2):
         return args
 
 
+
+class CleanMower(CleanV2):
+    """Clean command for mower devices.
+
+    Uses the 'clean' endpoint (not 'clean_V2') with V2-style content format.
+    Confirmed via traffic analysis of GOAT A3000 LiDAR (cr0e4u).
+
+    The mower uses 'clean' as the endpoint name but expects the same
+    content format as CleanV2 (with nested 'content' dict).
+    """
+
+    NAME = "clean"
+
+
+class CleanMowerArea(CleanMower):
+    """Clean area command for mower devices.
+
+    Supports the following mowing modes confirmed via traffic analysis:
+    - spotArea: zone mowing (value = zone ID)
+    - border: edge/border mowing (value = "aid:<zone_id>")
+    - assart: enhanced mowing (value = zone ID)
+    """
+
+    def __init__(self, mode: CleanMode, area: list[int | float], _: int = 1) -> None:
+        self._additional_content = {
+            "type": mode.value,
+            "value": ",".join(str(i) for i in area),
+        }
+        super().__init__(CleanAction.START)
+
+    def _get_args(self, action: CleanAction) -> dict[str, Any]:
+        args = super()._get_args(action)
+        if action == CleanAction.START:
+            args["content"].update(self._additional_content)
+        return args
+
+
 class GetCleanInfo(JsonCommandWithMessageHandling, MessageBodyDataDict):
     """Get clean info command."""
 
@@ -163,42 +200,3 @@ class GetCleanInfoV2(GetCleanInfo):
     """Get clean info v2 command."""
 
     NAME = "getCleanInfo_V2"
-
-
-class CleanMower(Clean):
-    """Clean command for mower devices.
-
-    Uses the 'clean' endpoint (not 'clean_V2') with V2-style content format.
-    Confirmed via traffic analysis of GOAT A3000 LiDAR (cr0e4u).
-    """
-
-    def _get_args(self, action: CleanAction) -> dict[str, Any]:
-        content: dict[str, str] = {}
-        args = {"act": action.value, "content": content}
-        match action:
-            case CleanAction.START:
-                content["type"] = CleanMode.AUTO.value
-            case CleanAction.STOP | CleanAction.PAUSE:
-                content["type"] = ""
-        return args
-
-
-class CleanMowerArea(CleanMower):
-    """Clean area command for mower devices.
-
-    Supports spotArea (zone mowing), border (edge mowing), assart (enhanced mowing).
-    Confirmed via traffic analysis of GOAT A3000 LiDAR (cr0e4u).
-    """
-
-    def __init__(self, mode: CleanMode, area: list[int | float], _: int = 1) -> None:
-        self._additional_content = {
-            "type": mode.value,
-            "value": ",".join(str(i) for i in area),
-        }
-        super().__init__(CleanAction.START)
-
-    def _get_args(self, action: CleanAction) -> dict[str, Any]:
-        args = super()._get_args(action)
-        if action == CleanAction.START:
-            args["content"].update(self._additional_content)
-        return args

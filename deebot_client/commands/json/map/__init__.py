@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 
-from deebot_client.commands.json.common import JsonCommandWithMessageHandling
+from deebot_client.commands.json.common import JsonCommandMqttP2P, JsonCommandWithMessageHandling
 from deebot_client.events import (
     MapSetEvent,
     MapSetType,
@@ -16,6 +16,7 @@ from deebot_client.events import (
     MinorMapEvent,
     RoomsEvent,
 )
+from deebot_client.command import InitParam
 from deebot_client.logging_filter import get_logger
 from deebot_client.message import HandlingResult, HandlingState, MessageBodyDataDict
 from deebot_client.messages.json.map import OnMapInfoV2
@@ -42,7 +43,7 @@ __all__ = [
 _LOGGER = get_logger(__name__)
 
 
-class GetMapSet(JsonCommandWithMessageHandling, MessageBodyDataDict):
+class GetMapSet(JsonCommandWithMessageHandling, JsonCommandMqttP2P, MessageBodyDataDict):
     """Get map set command."""
 
     _ARGS_ID = "id"
@@ -51,6 +52,15 @@ class GetMapSet(JsonCommandWithMessageHandling, MessageBodyDataDict):
     _ARGS_SUBSETS = "subsets"
 
     NAME = "getMapSet"
+
+    _mqtt_params = MappingProxyType({
+        "mid": InitParam(str, "mid"),
+        "type": InitParam(str, "type"),
+    })
+
+    def _handle_mqtt_p2p(self, event_bus: EventBus, response: dict[str, Any]) -> None:
+        """Handle response received over the mqtt channel "p2p"."""
+        self.handle(event_bus, response)
 
     def __init__(
         self,
